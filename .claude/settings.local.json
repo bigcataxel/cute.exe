@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
+      "Read(//c/Users/User/AppData/Local/Programs/Ollama/**)",
+      "Bash(\"C:/Users/User/AppData/Local/Programs/Ollama/ollama.exe\" list *)",
+      "Bash(python brain/scripts/generate.py --task \"Affiche 'Hello' sur stdout puis exit 0.\" --name \"test_repair\" --retries 1)",
+      "Bash(tasklist)",
+      "Bash(\"C:/Users/User/AppData/Local/Programs/Ollama/ollama.exe\" show *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)"
+    ]
+  }
+}
