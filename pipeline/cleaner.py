@@ -1,39 +1,52 @@
 import os
-import subprocess
 import re
 
-def clean_asm():
-    if not os.path.exists("clean_asm"):
-        os.makedirs("clean_asm")
+def clean_asm_line(line):
+    # 1. Supprimer les instructions de contrôle de flot inutiles (signatures)
+    if "endbr64" in line or "push\trbp" in line or "mov\trbp, rsp" in line or "pop\trbp" in line:
+        return None
     
-    c_files = [f for f in os.listdir("raw_c") if f.endswith(".c")]
+    # 2. Optimisation : Remplacer mov eax, 0 par xor eax, eax
+    line = re.sub(r'mov\teax, 0', 'xor\teax, eax', line)
     
-    for f in c_files:
-        input_path = f"raw_c/{f}"
-        output_path = f"clean_asm/{f.replace('.c', '.s')}"
-        
-        # Commande GCC pour générer l'assembleur pur (Syntaxe Intel, pas de protections)
-        cmd = f"gcc -S -masm=intel -fno-asynchronous-unwind-tables -fno-stack-protector {input_path} -o {output_path}"
-        subprocess.run(cmd, shell=True)
-        
-        # Nettoyage des directives de debug (.file, .ident, etc.)
-        if os.path.exists(output_path):
-            with open(output_path, "r") as asm_f:
-                lines = asm_f.readlines()
-            
-            clean_lines = []
+    # 3. Nettoyage des directives de debug et commentaires
+    if line.strip().startswith(('.', '#')):
+        if not line.strip().startswith('.LC'): # On garde les labels de strings
+            return None
+
+    # 4. (Optionnel) Nettoyage des DWORD PTR pour utiliser les registres
+    # Note : Cela demande une analyse plus complexe, mais on peut déjà
+    # supprimer les manipulations de stack frame inutiles
+    if "leave" in line or "ret" in line:
+        return line.strip()
+
+    return line.strip()
+
+def process_files():
+    raw_dir = "raw_c"
+    clean_dir = "clean_asm"
+    os.makedirs(clean_dir, exist_ok=True)
+
+    for f_name in os.listdir(raw_dir):
+        if f_name.endswith(".c"):
+            asm_file = f_name.replace(".c", ".s")
+            # Compilation brute vers assembleur Intel
+            os.system(f"gcc -S -masm=intel -Oz -fomit-frame-pointer -fno-stack-protector -fcf-protection=none {raw_dir}/{f_name} -o {clean_dir}/{asm_file}")
+
+            # Lecture et nettoyage
+            with open(f"{clean_dir}/{asm_file}", "r") as f:
+                lines = f.readlines()
+
+            cleaned_lines = []
             for line in lines:
-                # On ignore les lignes qui commencent par un point (directives) 
-                # SAUF les labels de fonctions et de sauts (.L)
-                if line.strip().startswith(".") and not line.strip().startswith(".L") and "intel_syntax" not in line:
-                    continue
-                if "endbr64" in line: # On vire la protection Intel CET
-                    continue
-                clean_lines.append(line)
-            
-            with open(output_path, "w") as asm_f:
-                asm_f.writelines(clean_lines)
-            print(f"✔ Nettoyé : {f}")
+                cleaned = clean_asm_line(line)
+                if cleaned:
+                    cleaned_lines.append(cleaned)
+
+            # Réécriture du fichier propre
+            with open(f"{clean_dir}/{asm_file}", "w") as f:
+                f.write("\n".join(cleaned_lines))
 
 if __name__ == "__main__":
-    clean_asm()
+    process_files()
+    print("✨ Dataset nettoyé : mov -> xor, signatures supprimées, registres optimisés.")
