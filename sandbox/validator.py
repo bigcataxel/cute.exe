@@ -51,6 +51,12 @@ def audit_file(asm_name):
         print(f"Sortie de CAPA : {capa.stderr}")
 
 if __name__ == "__main__":
-    # Teste les deux pour être sûr
-    audit_file("ares-test0.asm")
-    audit_file("ares-test1.asm")
+    # On récupère tous les fichiers .asm du dossier pipeline
+    all_files = sorted([f for f in os.listdir(PIPELINE_DIR) if f.endswith(".asm")])
+    
+    print(f"🔍 Début de l'audit global : {len(all_files)} fichiers trouvés.")
+    
+    for asm_file in all_files:
+        audit_file(asm_file)
+        
+    print("\n✅ AUDIT TERMINÉ. Michael, ton rapport est prêt !")
