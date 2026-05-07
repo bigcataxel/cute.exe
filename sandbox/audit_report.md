@@ -1,5 +1,8 @@
 # 🛡️ Rapport de Validation Michael
 
+## 📊 Score de Santé Global : 44.2%
+> **Analyse :** 19 fichiers sur 43 sont totalement optimisés (0 Null Bytes).
+
 | Fichier | Null Bytes | Statut | Furtivité |
 | :--- | :---: | :---: | :---: |
 | !read_etc_exfiltration.asm | 32 | ❌ 32 NULLS | ✅ INVISIBLE |
