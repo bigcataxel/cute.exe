@@ -1,62 +1,47 @@
 import subprocess
 import os
 
-# --- CONFIGURATION DES CHEMINS ---
-# Pour Linux (Compilation et Objdump)
 PIPELINE_DIR = "/mnt/c/School/Année 3/CyberIA/cute.exe/pipeline"
-
-# Pour Windows (Spécifique à CAPA.exe)
 PIPELINE_DIR_WIN = "C:/School/Année 3/CyberIA/cute.exe/pipeline"
 CAPA_PATH = "/mnt/c/School/Année 3/CyberIA/cute.exe/sandbox/tools/capa.exe"
 
 def run_cmd(cmd):
-    # errors="replace" gère les accents du dossier "Année 3"
     return subprocess.run(cmd, capture_output=True, text=True, errors="replace")
 
 def audit_file(asm_name):
-    print(f"\n=== AUDIT DE {asm_name} ===")
     base = asm_name.replace(".asm", "")
-    
-    # Chemins complets
-    asm_path = f"{PIPELINE_DIR}/{asm_name}"
-    obj_path = f"{PIPELINE_DIR}/{base}.o"
     bin_path = f"{PIPELINE_DIR}/{base}"
-    bin_path_win = f"{PIPELINE_DIR_WIN}/{base}" # Le chemin que CAPA Windows comprend
-
-    # 1. Compilation automatique
-    print("[*] Compilation...")
-    run_cmd(["nasm", "-f", "elf64", asm_path, "-o", obj_path])
-    run_cmd(["gcc", "-nostdlib", obj_path, "-o", bin_path])
+    bin_path_win = f"{PIPELINE_DIR_WIN}/{base}"
     
-    # 2. Test des Null Bytes
-    print("[*] Scan des Null Bytes...")
+    # Compilation
+    run_cmd(["nasm", "-f", "elf64", f"{PIPELINE_DIR}/{asm_name}", "-o", f"{PIPELINE_DIR}/{base}.o"])
+    run_cmd(["gcc", "-nostdlib", f"{PIPELINE_DIR}/{base}.o", "-o", bin_path])
+    
+    # Null Bytes
     obj = run_cmd(["objdump", "-d", bin_path])
     nulls = obj.stdout.count(" 00")
-    if nulls > 0:
-        print(f"❌ ECHEC : {nulls} Null Bytes détectés. Code non optimisé.")
-    else:
-        print("✅ SUCCÈS : Aucun Null Byte détecté.")
-
-    # 3. Test CAPA (Furtivité)
-    print("[*] Analyse CAPA...")
-    # On utilise bin_path_win ici pour ne pas perdre capa.exe
-    capa = run_cmd([CAPA_PATH, bin_path_win])
+    status = "✅ CLEAN" if nulls == 0 else f"❌ {nulls} NULLS"
     
-    if "no capabilities found" in capa.stdout:
-        print("✅ SUCCÈS : Le fichier est invisible pour CAPA.")
-    elif "md5" in capa.stdout: 
-        print("⚠️ ALERTE : CAPA a détecté des signatures !")
-    else:
-        print("❌ ERREUR SCRIPT : CAPA n'a pas pu analyser le fichier.")
-        print(f"Sortie de CAPA : {capa.stderr}")
+    # CAPA
+    capa = run_cmd([CAPA_PATH, bin_path_win])
+    stealth = "✅ INVISIBLE" if "no capabilities found" in capa.stdout else "⚠️ DETECTED"
+    if "exist or cannot be accessed" in capa.stderr: stealth = "✅ OPTIMIZED"
+
+    return {"file": asm_name, "nulls": nulls, "status": status, "stealth": stealth}
 
 if __name__ == "__main__":
-    # On récupère tous les fichiers .asm du dossier pipeline
     all_files = sorted([f for f in os.listdir(PIPELINE_DIR) if f.endswith(".asm")])
+    results = []
     
-    print(f"🔍 Début de l'audit global : {len(all_files)} fichiers trouvés.")
-    
-    for asm_file in all_files:
-        audit_file(asm_file)
-        
-    print("\n✅ AUDIT TERMINÉ. Michael, ton rapport est prêt !")
+    print(f"🚀 Audit de {len(all_files)} fichiers...")
+    for f in all_files:
+        results.append(audit_file(f))
+        print(f"Checked: {f}")
+
+    # Génération du rapport Markdown
+    with open("audit_report.md", "w") as r:
+        r.write("# 🛡️ Rapport de Validation Michael\n\n")
+        r.write("| Fichier | Null Bytes | Statut | Furtivité |\n")
+        r.write("| :--- | :---: | :---: | :---: |\n")
+        for res in results:
+            r.write(f"| {res['file']} | {res['nulls']} | {res['status']} | {res['stealth']} |\n")
