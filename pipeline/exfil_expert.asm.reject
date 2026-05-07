@@ -1,0 +1,24 @@
+section .text
+    global _start
+_start:
+    ; syscall number for sys_gethostname = 17
+    mov eax, 0x11
+    
+    ; file descriptor (stdout)
+    xor edi, edi
+    inc edi
+
+    lea rsi, [rel .buf]
+    mov dl, byte [rsi + .len - 2]   ; length of hostname string
+
+    syscall
+    
+    ; exit(0)
+    xor eax, eax
+    inc eax
+    xor edi, edi
+    syscall
+
+.buf:
+    db 'AAAAAAAAAA'  ; placeholder for the hostname
+.len equ $ - .buf

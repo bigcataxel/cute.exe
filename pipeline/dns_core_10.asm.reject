@@ -1,0 +1,27 @@
+section .text
+    global _start
+_start:
+    ; Initialisation du buffer avec des valeurs hexadécimales
+    xor rax, rax            ; nettoyer RAX (syscall number)
+    mov [buf], ax           ; ID = 0xAAA en little endian
+    inc al                  ; 1er octet du buffer = 0x01
+    shr ah, 8               ; décalage pour placer le second byte à la posi[4D[K
+position correcte (0x00)
+    mov [buf+2], ax         ; placement des bytes dans le buffer
+    
+    xor rax, rax            ; nettoyer RAX et RDI (syscall number, file des[3D[K
+descriptor 1 = stdout)
+    inc eax                 ; numéro de syscall pour write = 4
+    mov edi, eax            ; fd = 1 (stdout)
+    lea rsi, [buf]          ; adresse du buffer à écrire
+    mov edx, 10             ; nombre d'octets à écrire = longueur de la cha[3D[K
+chaîne + 2 octets pour l'ID et le type de requête DNS
+    
+    syscall                 ; appel système
+
+    xor rax, rax            ; nettoyer RAX (syscall number)
+    add al, 60              ; numéro de syscall pour exit = 123 en décimal
+    xor rdi, rdi            ; code d'erreur à retourner avec l'appel systèm[6D[K
+système exit = 0 (succès)
+    
+    syscall                 ; appel système

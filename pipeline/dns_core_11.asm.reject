@@ -1,0 +1,26 @@
+section .text
+    global _start
+_start:
+    ; Initialisation du buffer avec les valeurs 0xAA et 0x0B dans le premie[6D[K
+premier octet et le deuxième.
+    mov rdi, buf
+    mov [rdi], byte 0x0b   ; ID (0x0b)
+    inc rdi
+    mov [rdi], byte 0xaa   ; Standard Query (0xAA)
+    add rdi, 2              ; Pour passer les deux octets suivants.
+    
+    ; Remplissage du reste des octets avec zéro.
+    mov ecx, buflen - 4      ; Taille totale du buffer moins le déjà rempli[6D[K
+rempli (4)
+    sub rdi, 2              ; Désigner l'adresse de la troisième case pour [K
+commencer à zéro.
+    rep stosb               ; Remplir avec des zéros.
+    
+    mov rax, 60             ; Syscall number: exit (syscall 60)
+    xor rdi, rdi            ; Exit code: 0
+    syscall                 ; Appel du noyau
+
+section .data
+buf db 'ABCDEFGHIJKLMNOP'   ; Buffer de données avec une taille suffisante [K
+pour contenir le shellcode.
+buflen equ $ - buf           ; Longueur du buffer.
