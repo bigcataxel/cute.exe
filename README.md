@@ -37,6 +37,8 @@ Le projet suit un cycle de développement itératif impliquant quatre entités :
 2.  **Clovis (Fine-Tuner) :** Optimisation du dataset d'entraînement pour réduire les *Segmentation Faults*.
 3.  **Michael (Auditeur) :** Validation en environnement sandbox (Docker) et analyse de la reconstruction des données.
 
+---
+📊 **Dernier Rapport d'Audit :** [Consulter l'analyse de sécurité](./sandbox/audit_report.md)
 
 
 ---
