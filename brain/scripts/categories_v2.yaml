@@ -1,0 +1,30 @@
+---
+dns_query_header:
+  description: "DNS Query Header - Shellcode PIC"
+  format: shellcode
+  null_byte_free: false
+
+dns_exfil:
+  description: "DNS Exfiltration - Read file, encode QNAME, send DNS queries"
+  format: shellcode
+  null_byte_free: false
+
+tcp_exfil:
+  description: "TCP Exfiltration - Read file, connect, send data"
+  format: shellcode
+  null_byte_free: false
+
+udp_exfil:
+  description: "UDP Exfiltration - Read file, send via UDP"
+  format: shellcode
+  null_byte_free: false
+
+syscall_reference:
+  0: "sys_read"
+  1: "sys_write"
+  2: "sys_open"
+  3: "sys_close"
+  41: "sys_socket"
+  42: "sys_connect"
+  44: "sys_sendto"
+  60: "sys_exit"
