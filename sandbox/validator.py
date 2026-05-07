@@ -38,10 +38,21 @@ if __name__ == "__main__":
         results.append(audit_file(f))
         print(f"Checked: {f}")
 
-    # Génération du rapport Markdown
-    with open("audit_report.md", "w") as r:
+# 1. Calcul du Health Score (La touche Master)
+    total = len(results)
+    clean_count = sum(1 for r in results if "✅ CLEAN" in r['status'])
+    score = (clean_count / total) * 100 if total > 0 else 0
+
+    # 2. Génération du rapport avec le Score
+    with open("audit_report.md", "w", encoding="utf-8") as r:
         r.write("# 🛡️ Rapport de Validation Michael\n\n")
+        r.write(f"## 📊 Score de Santé Global : {score:.1f}%\n")
+        r.write(f"> **Analyse :** {clean_count} fichiers sur {total} sont totalement optimisés (0 Null Bytes).\n\n")
+        
         r.write("| Fichier | Null Bytes | Statut | Furtivité |\n")
         r.write("| :--- | :---: | :---: | :---: |\n")
         for res in results:
             r.write(f"| {res['file']} | {res['nulls']} | {res['status']} | {res['stealth']} |\n")
+
+    print(f"\n✅ Audit terminé ! Score : {score:.1f}%")
+    print("📊 Rapport mis à jour : sandbox/audit_report.md")
